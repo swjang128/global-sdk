@@ -1,1 +1,3 @@
-rootProject.name = 'isdk'
+rootProject.name = 'gsdk'
+include(':gsdk-connect')
+project(":gsdk-connect").projectDir = file('connect')

@@ -1,0 +1,1 @@
+org.springframework.boot.env.EnvironmentPostProcessor=io.snplab.gsdk.common.aws.EncryptionEnvironmentProcessor
