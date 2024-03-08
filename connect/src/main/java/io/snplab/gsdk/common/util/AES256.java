@@ -11,9 +11,9 @@ import java.util.Base64;
 
 public class AES256 {
 
-    private static final byte[] ivBytes = {30, -4, -33, -97, 43, -74, -72, -1, 39, 24, -46, -9, 12, -47, -79, 30};
+    private final byte[] ivBytes = {30, -4, -33, -97, 43, -74, -72, -1, 39, 24, -46, -9, 12, -47, -79, 30};
 
-    public static String encrypt(String data) {
+    public String encrypt(String data) {
 
         // AES-256-CBC 방식 암호화
         Cipher cipher = null;
@@ -55,7 +55,7 @@ public class AES256 {
         return base64EncryptedData;
     }
 
-    public static String decrypt(String base64EncryptedData) {
+    public String decrypt(String base64EncryptedData) {
 
         // AES-256-CBC 방식 복호화
         Cipher cipher = null;

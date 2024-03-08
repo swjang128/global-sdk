@@ -12,7 +12,6 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
-import io.snplab.gsdk.common.util.AES256;
 
 @Getter
 @Builder
@@ -57,7 +56,6 @@ public class AccountCreateDto {
     public Account toEntity() {
         return Account.builder()
                 .email(this.email)
-                .password(AES256.encrypt(this.password))
                 .firstName(this.firstName)
                 .lastName(this.lastName)
                 .companyName(this.companyName)

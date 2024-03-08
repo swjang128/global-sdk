@@ -14,4 +14,8 @@ public class RestApiResponse {
 	public static RestApiResponse setResponse(int code, Object data) {
 		return new RestApiResponse(code, data);
 	}
+
+	public static RestApiResponse setResponse(ResponseManager response) {
+		return new RestApiResponse(response.code, response.message);
+	}
 }

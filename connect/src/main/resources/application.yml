@@ -17,6 +17,11 @@ spring:
           time_zone: Asia/Seoul
         format-sql: true
         show: true
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
 
 logging:
   level:
