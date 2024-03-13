@@ -5,6 +5,8 @@ import io.snplab.gsdk.access.handler.AccountAuthenticationProvider;
 import io.snplab.gsdk.access.handler.AccountAuthenticationFailureHandler;
 import io.snplab.gsdk.access.handler.AccountAuthenticationSuccessHandler;
 import io.snplab.gsdk.access.service.AccountUserDetailsService;
+import io.snplab.gsdk.account.domain.AccountRoles;
+import io.snplab.gsdk.account.repository.AccountRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -32,7 +34,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     public void configure(WebSecurity web) throws Exception {
-        web.ignoring().antMatchers("/assets/**", "/pages/**");
+        web.ignoring().antMatchers("/assets/**", "/pages/**", "/**");
     }
 
     @Override
@@ -47,8 +49,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http
                 .authorizeRequests()
-                    .antMatchers("/login/**", "/password/**", "/v1/account/**").permitAll()
-                    .antMatchers("/v1/**").hasRole("NORMAL")
+                    .antMatchers("/login/**", "/password-reset", "/v1/account/**").permitAll()
+                    .antMatchers("/v1/**").hasRole(AccountRoles.ADMIN.name())
                     .antMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                     .anyRequest().authenticated()
                     .and()

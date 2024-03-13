@@ -6,10 +6,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class AccessController {
     /**
-     * view controller for password reset email
+     * password 재설정 진입을 위한 view controller
      * @return
      */
-    @GetMapping("/password/**")
+    @GetMapping("/password-reset")
     public String password() {
         return "/index";
     }

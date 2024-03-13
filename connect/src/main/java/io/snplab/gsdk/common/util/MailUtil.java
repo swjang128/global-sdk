@@ -9,7 +9,12 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 
+
 public class MailUtil {
+
+    final static String RESET_IMAGE = "https://cdn.v3.dev.myd.world/snplab/sdk/reset.png";
+    final static String LOGO_IMAGE = "https://cdn.v3.dev.myd.world/snplab/sdk/logo-white.svg";
+
     public static JSONObject getData(String email) throws JSONException {
         return new JSONObject()
                 .put("email", email)
@@ -17,7 +22,7 @@ public class MailUtil {
     }
 
     public static String getPasswordChangeLink(HttpServletRequest request, String base64EncryptedData) {
-        return MailUtil.getServerUrl(request) + "/password/change?enc=" + base64EncryptedData;
+        return MailUtil.getServerUrl(request) + "/password-reset?enc=" + base64EncryptedData;
     }
 
     public static String getServerUrl(HttpServletRequest request) {
@@ -30,8 +35,9 @@ public class MailUtil {
         String htmlFile = htmlFile = new String(resource.getInputStream().readAllBytes());
 
         return htmlFile
-//                .replace("{logo}", DASHBOARD_EMAIL_LOGO)
-//                .replace("{email}", email)
+                .replace("{logoImg}", LOGO_IMAGE)
+                .replace("{resetImg}", RESET_IMAGE)
+                .replace("{email}", email)
                 .replace("{url}", passwordChangeLink);
     }
 }

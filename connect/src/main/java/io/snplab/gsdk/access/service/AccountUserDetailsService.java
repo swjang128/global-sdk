@@ -1,6 +1,7 @@
 package io.snplab.gsdk.access.service;
 
-import io.snplab.gsdk.access.repository.AccountRepository;
+import io.snplab.gsdk.account.repository.AccountRepository;
+import io.snplab.gsdk.account.repository.AccountRoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.userdetails.User;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AccountUserDetailsService implements UserDetailsService {
     private final AccountRepository accountRepository;
+    private final AccountRoleRepository accountRoleRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException, InternalAuthenticationServiceException {
@@ -20,7 +22,9 @@ public class AccountUserDetailsService implements UserDetailsService {
                 .map(account -> User.builder()
                         .username(account.getEmail())
                         .password(account.getPassword())
-                        .roles("NORMAL")
+                        .roles(accountRoleRepository.findByAccountId(account.getId())
+                                .map(accountRole -> accountRole.getRoleName().name())
+                                .orElseThrow(() -> new InternalAuthenticationServiceException("UserDetailsService roles error")))
                         .build())
                 .orElseThrow(() -> new InternalAuthenticationServiceException("UserDetailsService returned null, which is an interface contract violation"));
     }

@@ -1,7 +1,7 @@
 package io.snplab.gsdk.common.aws;
 
-import io.snplab.gsdk.common.AESCrypto;
-import io.snplab.gsdk.common.OperationMode;
+import io.snplab.gsdk.common.util.AESCrypto;
+import io.snplab.gsdk.common.domain.OperationMode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

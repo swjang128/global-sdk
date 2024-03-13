@@ -1,14 +1,14 @@
 package io.snplab.gsdk.account.service;
 
-import io.snplab.gsdk.common.RestApiResponse;
-import io.snplab.gsdk.access.repository.Account;
-import io.snplab.gsdk.access.repository.AccountRepository;
+import com.sun.jdi.request.DuplicateRequestException;
 import io.snplab.gsdk.account.dto.AccountChangeDto;
-import io.snplab.gsdk.account.dto.AccountCheckDto;
+import io.snplab.gsdk.account.dto.AccountCheckResponseDto;
+import io.snplab.gsdk.account.dto.AccountCheckTokenResponseDto;
 import io.snplab.gsdk.account.dto.AccountCreateDto;
-import io.snplab.gsdk.account.dto.AccountEmailDto;
+import io.snplab.gsdk.account.repository.*;
+import io.snplab.gsdk.common.domain.RestApiResponse;
+import io.snplab.gsdk.common.service.AES256;
 import io.snplab.gsdk.common.service.MailService;
-import io.snplab.gsdk.common.util.AES256;
 import io.snplab.gsdk.common.util.Constants;
 import io.snplab.gsdk.common.util.MailUtil;
 import jdk.jfr.Description;
@@ -27,91 +27,111 @@ import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 
-import static io.snplab.gsdk.common.ResponseManager.*;
-
 @RequiredArgsConstructor
 @Slf4j
 @Service
 public class AccountServiceImpl implements AccountService {
+    private final ServiceInfoRepository serviceInfoRepository;
+    private final AccountRoleRepository accountRoleRepository;
     private final AccountRepository accountRepository;
+    private final CompanyRepository companyRepository;
     private final MailService mailService;
     private final PasswordEncoder passwordEncoder;
-
-    @Description("Email duplicate check service")
-    @Override
-    public RestApiResponse emailDuplicateCheck(String email) {
-        Optional<Account> account = accountRepository.findByEmail(email);
-        if (account.isPresent()) {
-            return RestApiResponse.setResponse(DUPLICATE_EMAIL.code, email);
-        }
-        return RestApiResponse.setResponse(NON_DUPLICATE_EMAIL.code, email);
-    }
+    private final AES256 aes256;
 
     @Description("Sign up service")
     @Transactional
     @Override
-    public RestApiResponse signUp(AccountCreateDto accountCreateDto) {
-        Account account = accountCreateDto.toEntity();
+    public RestApiResponse<Object> signUp(AccountCreateDto accountCreateDto) {
+        if(accountRepository.findByEmail(accountCreateDto.getEmail()).isPresent()) {
+            throw new DuplicateRequestException("이메일 중복.");
+        }
+
+        // set company
+        Company company = companyRepository.findByName(accountCreateDto.getCompanyName().strip())
+                .orElseGet(() -> Company.of(accountCreateDto));
+        companyRepository.save(company);
+
+        // set account
+        Account account = accountCreateDto.toAccountEntity(company.getId());
+        account.setEmail(aes256.encrypt(accountCreateDto.getEmail().strip()));
         account.setPassword(passwordEncoder.encode(accountCreateDto.getPassword()));
+        account.setPhoneNumber(aes256.encrypt(accountCreateDto.getPhoneNumber().strip()));
         accountRepository.save(account);
-        return RestApiResponse.setResponse(CREATED.code, CREATED.message);
+
+        // set service_info
+        ServiceInfo serviceInfo = serviceInfoRepository.findByCompanyIdAndName(company.getId(), accountCreateDto.getServiceName().strip())
+                .orElseGet(() -> ServiceInfo.of(accountCreateDto, company.getId()));
+        serviceInfoRepository.save(serviceInfo);
+
+        // set account_role
+        accountRoleRepository.save(AccountRole.of(account.getId(), serviceInfo.getId()));
+
+        return RestApiResponse.success();
     }
 
     @Override
-    public RestApiResponse check(AccountCheckDto accountCheckDto) {
-        return accountRepository.findByEmail(accountCheckDto.getEmail().trim())
-                .map(account -> {
-                    String fullName = account.getFirstName() + " " + account.getLastName();
-                    return fullName.equals(accountCheckDto.getName()) ? RestApiResponse.setResponse(SUCCESS) : null;
-                })
-                .orElseThrow(() -> new UsernameNotFoundException("not found account."));
+    public RestApiResponse<AccountCheckResponseDto> check(String email) {
+        return accountRepository.findByEmail(aes256.encrypt(email.strip()))
+                .map(account -> RestApiResponse.success(new AccountCheckResponseDto(aes256.decrypt(account.getEmail()))))
+                .orElse(RestApiResponse.success(null));
     }
 
     @Override
-    public RestApiResponse email(HttpServletRequest httpServletRequest, AccountEmailDto accountEmailDto) throws JSONException, MessagingException, IOException {
-        String email = accountEmailDto.getEmail();
-        Optional<Account> optionalAccount = accountRepository.findByEmail(email);
+    public RestApiResponse<Object> email(HttpServletRequest httpServletRequest, String email) throws JSONException, MessagingException, IOException {
+        Optional<Account> optionalAccount = accountRepository.findByEmail(aes256.encrypt(email.strip()));
         if (optionalAccount.isEmpty()) {
-            throw new UsernameNotFoundException("not registered account.");
+            throw new UsernameNotFoundException("등록되지않은 이메일.");
         }
 
         // 비밀번호 변경 링크 생성 (만료시간: 현재시간 +6시간, 암호화 방식: AES-256)
-        String ciphertext = new AES256().encrypt(MailUtil.getData(email).toString());
+        String ciphertext = aes256.encrypt(MailUtil.getData(email.strip()).toString());
 
         String passwordChangeLink = MailUtil.getPasswordChangeLink(httpServletRequest, ciphertext);
-        String content = MailUtil.generateHtmlContent(email, passwordChangeLink, Constants.PASSWORD_RESET_FILE);
+        String content = MailUtil.generateHtmlContent(email.strip(), passwordChangeLink, Constants.PASSWORD_RESET_FILE);
 
-        mailService.send(email, Constants.PASSWORD_RESET_EMAIL_TITLE, content);
+        mailService.send(email.strip(), Constants.PASSWORD_RESET_EMAIL_TITLE, content);
 
-        return RestApiResponse.setResponse(SUCCESS);
+        return RestApiResponse.success();
     }
 
     @Override
     @Transactional
-    public RestApiResponse change(AccountChangeDto accountChangeDto) throws JSONException {
+    public RestApiResponse<Object> change(AccountChangeDto accountChangeDto) throws JSONException {
         String newPassword = accountChangeDto.getPassword();
         if (!newPassword.equals(accountChangeDto.getPasswordCheck())) {
-            throw new RuntimeException("password does not match.");
+            throw new RuntimeException("password 일치하지 않음.");
         }
 
-        String decrypted = new AES256().decrypt(accountChangeDto.getBase64EncryptedData());
-        JSONObject jsonObject = new JSONObject(decrypted);
+        return accountRepository.findByEmail(getEmailFrom(accountChangeDto.getBase64EncryptedData()))
+                .map(account -> {
+                    account.setPassword(passwordEncoder.encode(newPassword));
+                    return RestApiResponse.success();
+                })
+                .orElseThrow(() -> new UsernameNotFoundException("등록되지 않은 계정."));
+    }
 
-        String email = jsonObject.getString("email");
-        String expiration = jsonObject.getString("expiration");
+    @Override
+    public RestApiResponse<AccountCheckTokenResponseDto> decryptToken(String token) {
+        return accountRepository.findByEmail(getEmailFrom(token))
+                .map(account -> RestApiResponse.success(new AccountCheckTokenResponseDto(account.getEmail(), account.getFirstName(), account.getLastName())))
+                .orElseThrow(() -> new UsernameNotFoundException("등록되지 않은 계정."));
+    }
+
+    private String getEmailFrom(String base64EncryptedData) {
+        String decrypted = aes256.decrypt(base64EncryptedData);
+        JSONObject decryptedObject = new JSONObject(decrypted);
+
+        String email = decryptedObject.getString("email");
+        String expiration = decryptedObject.getString("expiration");
 
         OffsetDateTime expirationDateTime = OffsetDateTime.parse(expiration);
         OffsetDateTime now = OffsetDateTime.now().withNano(0);
 
         if (now.isAfter(expirationDateTime)) {
-            throw new RuntimeException("Time has expired.");
+            throw new RuntimeException("토큰 시간 만료.");
         }
 
-        return accountRepository.findByEmail(email)
-                .map(account -> {
-                    account.setPassword(passwordEncoder.encode(newPassword));
-                    return RestApiResponse.setResponse(CREATED);
-                })
-                .orElseThrow(() -> new UsernameNotFoundException("Account not found."));
+        return email;
     }
 }

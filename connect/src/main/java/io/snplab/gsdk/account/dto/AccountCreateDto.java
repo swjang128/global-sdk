@@ -1,6 +1,7 @@
 package io.snplab.gsdk.account.dto;
 
-import io.snplab.gsdk.access.repository.Account;
+import io.snplab.gsdk.account.domain.AccountStatus;
+import io.snplab.gsdk.account.repository.Account;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jdk.jfr.Description;
 import lombok.AllArgsConstructor;
@@ -17,50 +18,52 @@ import javax.validation.constraints.Size;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Description("Sign up DTO")
+@Description("회원가입 DTO")
 public class AccountCreateDto {
-    @NotBlank(message = "Please enter email.")
-    @Size(min=1, max=50, message="Please enter your email address with 50 characters or less.")
-    @Email(message = "Please enter correct email format.")
-    @Schema(description = "Email for login", example = "example@snplab.io", required = true)
+    @NotBlank(message = "이메일을 입력해주세요.")
+    @Size(min = 1, max = 50, message = "이메일 입력값 50자 미만.")
+    @Email(message = "이메일 형식에 맞게 입력해주세요.")
+    @Schema(description = "이메일", example = "example@snplab.io", required = true)
     private String email;
 
-    @NotBlank(message="Please enter password.")
-    @Pattern(regexp="(?=.*\\d)(?=.*[a-zA-Z])(?=.*\\W)(?=\\S+$).{8,}",
-            message="The password must be 8 characters long and contain at least one uppercase and lowercase English letter, number, and special symbol.")
-    @Schema(description = "Password for login", example = "examplePassword1!", required = true)
+    @NotBlank(message = "비밀번호를 입력해주세요.")
+    @Pattern(regexp = "(?=.*\\d)(?=.*[a-zA-Z])(?=.*\\W)(?=\\S+$).{8,}",
+            message = "숫자, 특수문자, 소문자, 대문자가 각각 하나이상들어간 8자리이상 조합")
+    @Schema(description = "비밀번호", example = "examplePassword1!", required = true)
     private String password;
 
-    @NotBlank(message = "Please enter firstName.")
-    @Size(min=1, max=20, message="Please enter your firstName with 20 characters or less.")
-    @Schema(description = "User's first name", example = "Barret", required = true)
+    @NotBlank(message = "이름을 입력해주세요.")
+    @Size(min=1, max=20, message="이름 입력값 20자 미만.")
+    @Schema(description = "사용자 이름", example = "Barret", required = true)
     private String firstName;
 
-    @NotBlank(message = "Please enter lastName.")
-    @Size(min=1, max=20, message="Please enter your lastName with 20 characters or less.")
-    @Schema(description = "User's last name", example = "Wallace", required = true)
+    @NotBlank(message = "이름을 입력해주세요.")
+    @Size(min=1, max=20, message="이름 입력값 20자 미만.")
+    @Schema(description = "사용자 이름", example = "Wallace", required = true)
     private String lastName;
 
-    @Size(min=1, max=30, message="Please enter your companyName with 30 characters or less.")
-    @Schema(description = "User's company name", example = "snplab")
+    @Size(min = 1, max = 30, message = "회사 입력값 30자 미만.")
+    @Schema(description = "사용자 회사명", example = "snplab")
     private String companyName;
 
-    @Size(min=1, max=30, message="Please enter your serviceName with 30 characters or less.")
-    @Schema(description = "Service name to use SDK", example = "myD")
+    @Size(min = 1, max = 30, message = "서비스 입력값 30자 미만.")
+    @Schema(description = "서비스 이름", example = "myD")
     private String serviceName;
 
-    @Size(min=1, max=30, message="Please enter your country with 30 characters or less.")
-    @Schema(description = "User's country", example = "Republic of Korea")
+    @Size(min = 1, max = 30, message = "국가 입력값 30자 미만.")
+    @Schema(description = "사용자 국가", example = "Republic of Korea")
     private String country;
 
-    public Account toEntity() {
+    @Size(min = 1, max = 20, message = "핸드폰번호 입력값 20자 미만.")
+    @Schema(description = "핸드폰번호", example = "01000009999")
+    private String phoneNumber;
+
+    public Account toAccountEntity(long companyId) {
         return Account.builder()
-                .email(this.email)
-                .firstName(this.firstName)
-                .lastName(this.lastName)
-                .companyName(this.companyName)
-                .serviceName(this.serviceName)
-                .country(this.country)
+                .firstName(this.firstName.strip())
+                .lastName(this.lastName.strip())
+                .companyId(companyId)
+                .status(AccountStatus.ACTIVATED)
                 .build();
     }
 }

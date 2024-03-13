@@ -1,6 +1,6 @@
 package io.snplab.gsdk.common.aws;
 
-import io.snplab.gsdk.common.AESCrypto;
+import io.snplab.gsdk.common.util.AESCrypto;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.env.EnvironmentPostProcessor;
 import org.springframework.core.env.ConfigurableEnvironment;
