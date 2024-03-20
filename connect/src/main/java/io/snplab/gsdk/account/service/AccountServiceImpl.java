@@ -1,10 +1,7 @@
 package io.snplab.gsdk.account.service;
 
 import com.sun.jdi.request.DuplicateRequestException;
-import io.snplab.gsdk.account.dto.AccountChangeDto;
-import io.snplab.gsdk.account.dto.AccountCheckResponseDto;
-import io.snplab.gsdk.account.dto.AccountCheckTokenResponseDto;
-import io.snplab.gsdk.account.dto.AccountCreateDto;
+import io.snplab.gsdk.account.dto.*;
 import io.snplab.gsdk.account.repository.*;
 import io.snplab.gsdk.common.domain.RestApiResponse;
 import io.snplab.gsdk.common.service.AES256;
@@ -25,7 +22,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.io.IOException;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -43,24 +42,24 @@ public class AccountServiceImpl implements AccountService {
     @Transactional
     @Override
     public RestApiResponse<Object> signUp(AccountCreateDto accountCreateDto) {
-        if(accountRepository.findByEmail(accountCreateDto.getEmail()).isPresent()) {
+        if (getAccountByEncryptedEmail(accountCreateDto.getEmail()).isPresent()) {
             throw new DuplicateRequestException("이메일 중복.");
         }
 
         // set company
-        Company company = companyRepository.findByName(accountCreateDto.getCompanyName().strip())
+        Company company = companyRepository.findByName(accountCreateDto.getCompanyName())
                 .orElseGet(() -> Company.of(accountCreateDto));
         companyRepository.save(company);
 
         // set account
-        Account account = accountCreateDto.toAccountEntity(company.getId());
-        account.setEmail(aes256.encrypt(accountCreateDto.getEmail().strip()));
-        account.setPassword(passwordEncoder.encode(accountCreateDto.getPassword()));
-        account.setPhoneNumber(aes256.encrypt(accountCreateDto.getPhoneNumber().strip()));
+        Account account = accountCreateDto.toAccountEntity(company.getId(),
+                aes256.encrypt(accountCreateDto.getEmail()),
+                passwordEncoder.encode(accountCreateDto.getPassword()),
+                aes256.encrypt(accountCreateDto.getPhoneNumber()));
         accountRepository.save(account);
 
         // set service_info
-        ServiceInfo serviceInfo = serviceInfoRepository.findByCompanyIdAndName(company.getId(), accountCreateDto.getServiceName().strip())
+        ServiceInfo serviceInfo = serviceInfoRepository.findByCompanyIdAndName(company.getId(), accountCreateDto.getServiceName())
                 .orElseGet(() -> ServiceInfo.of(accountCreateDto, company.getId()));
         serviceInfoRepository.save(serviceInfo);
 
@@ -71,26 +70,26 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public RestApiResponse<AccountCheckResponseDto> check(String email) {
-        return accountRepository.findByEmail(aes256.encrypt(email.strip()))
+    public RestApiResponse<AccountCheckResponseDto> getEmail(String email) {
+        return getAccountByEncryptedEmail(email)
                 .map(account -> RestApiResponse.success(new AccountCheckResponseDto(aes256.decrypt(account.getEmail()))))
                 .orElse(RestApiResponse.success(null));
     }
 
     @Override
-    public RestApiResponse<Object> email(HttpServletRequest httpServletRequest, String email) throws JSONException, MessagingException, IOException {
-        Optional<Account> optionalAccount = accountRepository.findByEmail(aes256.encrypt(email.strip()));
+    public RestApiResponse<Object> sendEmail(HttpServletRequest httpServletRequest, String email) throws JSONException, MessagingException, IOException {
+        Optional<Account> optionalAccount = getAccountByEncryptedEmail(email);
         if (optionalAccount.isEmpty()) {
             throw new UsernameNotFoundException("등록되지않은 이메일.");
         }
 
         // 비밀번호 변경 링크 생성 (만료시간: 현재시간 +6시간, 암호화 방식: AES-256)
-        String ciphertext = aes256.encrypt(MailUtil.getData(email.strip()).toString());
+        String ciphertext = aes256.encrypt(MailUtil.getData(aes256.encrypt(email)).toString());
 
         String passwordChangeLink = MailUtil.getPasswordChangeLink(httpServletRequest, ciphertext);
-        String content = MailUtil.generateHtmlContent(email.strip(), passwordChangeLink, Constants.PASSWORD_RESET_FILE);
+        String content = MailUtil.generateHtmlContent(email, passwordChangeLink, Constants.PASSWORD_RESET_FILE);
 
-        mailService.send(email.strip(), Constants.PASSWORD_RESET_EMAIL_TITLE, content);
+        mailService.send(email, Constants.PASSWORD_RESET_EMAIL_TITLE, content);
 
         return RestApiResponse.success();
     }
@@ -114,8 +113,38 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public RestApiResponse<AccountCheckTokenResponseDto> decryptToken(String token) {
         return accountRepository.findByEmail(getEmailFrom(token))
-                .map(account -> RestApiResponse.success(new AccountCheckTokenResponseDto(account.getEmail(), account.getFirstName(), account.getLastName())))
+                .map(account -> RestApiResponse.success(new AccountCheckTokenResponseDto(aes256.decrypt(account.getEmail()), account.getFirstName(), account.getLastName())))
                 .orElseThrow(() -> new UsernameNotFoundException("등록되지 않은 계정."));
+    }
+
+    @Override
+    public RestApiResponse<AccountGetResponseDtoImpl> get(Long id) {
+        return accountRepository.findAccountInfoById(id)
+                .map(accountGetResponseDto -> RestApiResponse.success(generateAccountGetResponseDtoImpl(accountGetResponseDto)))
+                .orElseThrow(() -> new UsernameNotFoundException("등록되지 않은 계정."));
+    }
+
+    @Override
+    public RestApiResponse<List<AccountGetResponseDtoImpl>> list() {
+        return RestApiResponse.success(accountRepository.findAccountInfoAll()
+                .stream()
+                .map(this::generateAccountGetResponseDtoImpl)
+                .collect(Collectors.toList()));
+    }
+
+    private AccountGetResponseDtoImpl generateAccountGetResponseDtoImpl(AccountGetResponseDto accountGetResponseDto) {
+        return AccountGetResponseDtoImpl.builder()
+                .email(aes256.decrypt(accountGetResponseDto.getEmail()))
+                .firstName(accountGetResponseDto.getFirstName())
+                .lastName(accountGetResponseDto.getLastName())
+                .phoneNumber(aes256.decrypt(accountGetResponseDto.getPhoneNumber()))
+                .companyName(accountGetResponseDto.getCompanyName())
+                .serviceName(accountGetResponseDto.getServiceName())
+                .build();
+    }
+
+    private Optional<Account> getAccountByEncryptedEmail(String email) {
+        return accountRepository.findByEmail(aes256.encrypt(email));
     }
 
     private String getEmailFrom(String base64EncryptedData) {
@@ -134,4 +163,5 @@ public class AccountServiceImpl implements AccountService {
 
         return email;
     }
+
 }

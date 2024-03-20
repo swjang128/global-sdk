@@ -58,12 +58,28 @@ public class AccountCreateDto {
     @Schema(description = "핸드폰번호", example = "01000009999")
     private String phoneNumber;
 
-    public Account toAccountEntity(long companyId) {
+    public Account toAccountEntity(long companyId, String email, String password, String phoneNumber) {
         return Account.builder()
-                .firstName(this.firstName.strip())
-                .lastName(this.lastName.strip())
+                .email(email)
+                .password(password)
+                .firstName(this.firstName)
+                .lastName(this.lastName)
+                .phoneNumber(phoneNumber)
                 .companyId(companyId)
                 .status(AccountStatus.ACTIVATED)
+                .build();
+    }
+
+    public AccountCreateDto strip(AccountCreateDto accountCreateDto) {
+        return AccountCreateDto.builder()
+                .email(accountCreateDto.getEmail().strip())
+                .password(accountCreateDto.getPassword().strip())
+                .firstName(accountCreateDto.getFirstName().strip())
+                .lastName(accountCreateDto.getLastName().strip())
+                .companyName(accountCreateDto.getCompanyName().strip())
+                .serviceName(accountCreateDto.getServiceName().strip())
+                .country(accountCreateDto.getCountry().strip())
+                .phoneNumber(accountCreateDto.getPhoneNumber().strip())
                 .build();
     }
 }

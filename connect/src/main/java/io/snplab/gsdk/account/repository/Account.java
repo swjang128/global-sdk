@@ -36,7 +36,6 @@ public class Account {
     @Column(length = 20)
     private String lastName;
 
-    @Column()
     private String phoneNumber;
 
     @Column(nullable = false, columnDefinition = "INT UNSIGNED")

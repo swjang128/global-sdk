@@ -15,5 +15,9 @@ public enum EnvironmentKey {
 
     APP_PUSH_RANDOM_ID,
 
-    B2B_PASSWORD_KEY
+    B2B_PASSWORD_KEY,
+
+    B2B_WEB_ROOT_PATH,
+
+    B2B_WEB_PUBLIC_URL
 }

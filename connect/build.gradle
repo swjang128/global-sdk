@@ -7,6 +7,9 @@ dependencies {
 	implementation 'com.amazonaws:aws-java-sdk-kms:1.12.249'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.json:json:20231013'
+	implementation 'org.apache.poi:poi:5.2.5'
+	implementation 'org.apache.poi:poi-ooxml:5.2.5'
+	implementation 'com.opencsv:opencsv:3.7'
 }
 
 jar {

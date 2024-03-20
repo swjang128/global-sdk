@@ -1,6 +1,6 @@
 package io.snplab.gsdk.common.service;
 
-import io.snplab.gsdk.common.util.KeyUtil;
+import io.snplab.gsdk.common.util.Environment;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -32,7 +32,7 @@ public class AES256 {
     }
 
     public String encrypt(String data) {
-        SecretKey secretKey = new SecretKeySpec(KeyUtil.B2B_CRYPTO_KEY.getBytes(), "AES");
+        SecretKey secretKey = new SecretKeySpec(Environment.B2B_CRYPTO_KEY.getBytes(), "AES");
         try {
             cipher.init(Cipher.ENCRYPT_MODE, secretKey, iv);
         } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
@@ -55,7 +55,7 @@ public class AES256 {
     }
 
     public String decrypt(String base64EncryptedData) {
-        SecretKey secretKey = new SecretKeySpec(KeyUtil.B2B_CRYPTO_KEY.getBytes(), "AES");
+        SecretKey secretKey = new SecretKeySpec(Environment.B2B_CRYPTO_KEY.getBytes(), "AES");
         try {
             cipher.init(Cipher.DECRYPT_MODE, secretKey, iv);
         } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {

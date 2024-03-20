@@ -1,8 +1,12 @@
 package io.snplab.gsdk.common.handler;
 
+import com.amazonaws.services.kms.model.NotFoundException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.sun.jdi.request.DuplicateRequestException;
 import io.snplab.gsdk.common.domain.RestApiResponse;
+import io.snplab.gsdk.common.handler.exception.FileOrDirectoryNotExistException;
+import io.snplab.gsdk.common.handler.exception.FileSaveException;
+import io.snplab.gsdk.common.handler.exception.FileValidityException;
 import jdk.jfr.Description;
 import org.json.JSONException;
 import org.slf4j.Logger;
@@ -72,7 +76,7 @@ public class ExceptionResponseHandler extends ResponseEntityExceptionHandler {
     }
 
     @Description("Request bad request exception abort")
-    @ExceptionHandler({HttpClientErrorException.BadRequest.class, HttpClientErrorException.NotFound.class})
+    @ExceptionHandler({HttpClientErrorException.BadRequest.class, HttpClientErrorException.NotFound.class, NotFoundException.class})
     public RestApiResponse<Object> handleBadRequestException(Exception e) {
         logger.error("handle BadRequestException: {}", e.getMessage());
         return RestApiResponse.error(HttpStatus.BAD_REQUEST, e.getMessage());
@@ -90,5 +94,26 @@ public class ExceptionResponseHandler extends ResponseEntityExceptionHandler {
     public RestApiResponse<Object> handleForbiddenException(Exception e) {
         logger.error("handle ForbiddenException: {}", e.getMessage());
         return RestApiResponse.error(HttpStatus.FORBIDDEN, e.getMessage());
+    }
+
+    @Description("File validation exception abort")
+    @ExceptionHandler(FileValidityException.class)
+    public RestApiResponse<Object> handleFileValidateException(FileValidityException e) {
+        logger.error("handle FileValidationException: {}", e.getMessage());
+        return RestApiResponse.error(e.getCode(), e.getMessage());
+    }
+
+    @Description("File upload exception abort")
+    @ExceptionHandler(FileSaveException.class)
+    public RestApiResponse<Object> handleFileSaveException(FileSaveException e) {
+        logger.error("handle FileSaveException: {}", e.getMessage());
+        return RestApiResponse.error(e.getCode(), e.getMessage());
+    }
+
+    @Description("File or Directory not found exception abort")
+    @ExceptionHandler(FileOrDirectoryNotExistException.class)
+    public RestApiResponse<Object> handleFileOrDirectoryNotExistException(FileOrDirectoryNotExistException e) {
+        logger.error("handle File or Directory NotExistException: {}", e.getMessage());
+        return RestApiResponse.error(e.getCode(), e.getMessage());
     }
 }

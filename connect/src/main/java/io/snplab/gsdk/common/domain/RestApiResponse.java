@@ -19,14 +19,14 @@ public class RestApiResponse<T> {
 	public static <T> RestApiResponse<T> success() {
 		RestApiResponse<T> response = new RestApiResponse<>();
 		response.setCode(HttpStatus.OK.value());
-		response.setMessage(HttpStatus.OK.getReasonPhrase());
+		response.setMessage("Success");
 		return response;
 	}
 
 	public static <T> RestApiResponse<T> success(T data) {
 		RestApiResponse<T> response = new RestApiResponse<>();
 		response.setCode(HttpStatus.OK.value());
-		response.setMessage(HttpStatus.OK.getReasonPhrase());
+		response.setMessage("Success");
 		response.setData(data);
 		return response;
 	}

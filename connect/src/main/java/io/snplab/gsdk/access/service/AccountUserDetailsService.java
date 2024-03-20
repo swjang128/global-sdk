@@ -20,7 +20,7 @@ public class AccountUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException, InternalAuthenticationServiceException {
         return accountRepository.findByEmail(username)
                 .map(account -> User.builder()
-                        .username(account.getEmail())
+                        .username(username)
                         .password(account.getPassword())
                         .roles(accountRoleRepository.findByAccountId(account.getId())
                                 .map(accountRole -> accountRole.getRoleName().name())

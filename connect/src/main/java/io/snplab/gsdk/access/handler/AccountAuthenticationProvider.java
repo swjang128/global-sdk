@@ -1,6 +1,7 @@
 package io.snplab.gsdk.access.handler;
 
 import io.snplab.gsdk.access.service.AccountUserDetailsService;
+import io.snplab.gsdk.common.service.AES256;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 public class AccountAuthenticationProvider implements AuthenticationProvider {
     private final PasswordEncoder passwordEncoder;
     private final AccountUserDetailsService accountUserDetailsService;
+    private final AES256 aes256;
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
@@ -25,7 +27,7 @@ public class AccountAuthenticationProvider implements AuthenticationProvider {
             throw new AuthenticationCredentialsNotFoundException("Credentials is null");
         }
 
-        UserDetails userDetails = accountUserDetailsService.loadUserByUsername(authentication.getName());
+        UserDetails userDetails = accountUserDetailsService.loadUserByUsername(aes256.encrypt(authentication.getName()));
 
         if (!passwordEncoder.matches(authentication.getCredentials() + "", userDetails.getPassword())) {
             throw new BadCredentialsException("Password does not match stored value");
