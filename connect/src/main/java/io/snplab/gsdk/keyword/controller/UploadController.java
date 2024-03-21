@@ -18,7 +18,7 @@ import java.io.IOException;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("v1/file")
+@RequestMapping("/v1/file")
 @Tag(name = "Global SDK 파일 관리 API", description = "Global SDK Upload API")
 public class UploadController {
 
@@ -26,7 +26,7 @@ public class UploadController {
 
     @Operation(summary = "File Detail API", description = "Keyword 상세 정보")
     @ApiResponse(responseCode = "200", description = "Keyword 업로드 정보 및 파일 정보 전달")
-    @PostMapping("detail")
+    @PostMapping("/detail")
     public RestApiResponse<FileDetailInfoResponseDto> detailFile() {
 
         return fileUploadService.getDetailInfo();
@@ -35,7 +35,7 @@ public class UploadController {
 
     @Operation(summary = "File Upload API", description = "파일의 유효성 검사 및 저장")
     @ApiResponse(responseCode = "200", description = "파일 유효성 통과 및 업로드 성공")
-    @PostMapping("upload")
+    @PostMapping("/upload")
     public RestApiResponse<Object> uploadFile(MultipartHttpServletRequest request) throws IOException, InvalidFormatException {
 
         return fileUploadService.vaildateAndUploadExcel(request);
@@ -43,7 +43,7 @@ public class UploadController {
 
     @Operation(summary = "File Download API", description = "파일 다운로드")
     @ApiResponse(responseCode = "200", description = "파일 다운로드 성공")
-    @PostMapping("download")
+    @PostMapping("/download")
     public ResponseEntity downloadFile() {
 
         return fileUploadService.downloadFile();

@@ -118,28 +118,37 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public RestApiResponse<AccountGetResponseDtoImpl> get(Long id) {
+    public RestApiResponse<AccountGetResponseDto> get(Long id) {
         return accountRepository.findAccountInfoById(id)
-                .map(accountGetResponseDto -> RestApiResponse.success(generateAccountGetResponseDtoImpl(accountGetResponseDto)))
+                .map(accountGetResponseDto -> RestApiResponse.success(generateAccountGetResponseDto(accountGetResponseDto)))
                 .orElseThrow(() -> new UsernameNotFoundException("등록되지 않은 계정."));
     }
 
     @Override
-    public RestApiResponse<List<AccountGetResponseDtoImpl>> list() {
+    public RestApiResponse<List<AccountGetResponseDto>> list() {
         return RestApiResponse.success(accountRepository.findAccountInfoAll()
                 .stream()
-                .map(this::generateAccountGetResponseDtoImpl)
+                .map(this::generateAccountGetResponseDto)
                 .collect(Collectors.toList()));
     }
 
-    private AccountGetResponseDtoImpl generateAccountGetResponseDtoImpl(AccountGetResponseDto accountGetResponseDto) {
-        return AccountGetResponseDtoImpl.builder()
-                .email(aes256.decrypt(accountGetResponseDto.getEmail()))
-                .firstName(accountGetResponseDto.getFirstName())
-                .lastName(accountGetResponseDto.getLastName())
-                .phoneNumber(aes256.decrypt(accountGetResponseDto.getPhoneNumber()))
-                .companyName(accountGetResponseDto.getCompanyName())
-                .serviceName(accountGetResponseDto.getServiceName())
+    @Override
+    public RestApiResponse<AccountGetResponseDto> get(String email) {
+        return get(
+                accountRepository.findByEmail(email)
+                        .orElseThrow(() -> new UsernameNotFoundException("등록되지 않은 계정."))
+                        .getId()
+        );
+    }
+
+    private AccountGetResponseDto generateAccountGetResponseDto(AccountProjection accountProjection) {
+        return AccountGetResponseDto.builder()
+                .email(aes256.decrypt(accountProjection.getEmail()))
+                .firstName(accountProjection.getFirstName())
+                .lastName(accountProjection.getLastName())
+                .phoneNumber(aes256.decrypt(accountProjection.getPhoneNumber()))
+                .companyName(accountProjection.getCompanyName())
+                .serviceName(accountProjection.getServiceName())
                 .build();
     }
 

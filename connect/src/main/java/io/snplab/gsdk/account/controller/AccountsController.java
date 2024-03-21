@@ -1,6 +1,6 @@
 package io.snplab.gsdk.account.controller;
 
-import io.snplab.gsdk.account.dto.AccountGetResponseDtoImpl;
+import io.snplab.gsdk.account.dto.AccountGetResponseDto;
 import io.snplab.gsdk.account.service.AccountService;
 import io.snplab.gsdk.common.domain.RestApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,7 +15,7 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("v1/accounts")
+@RequestMapping("/v1/accounts")
 @Tag(name = "Global SDK 모든 계정 API")
 public class AccountsController {
     private final AccountService accountService;
@@ -23,7 +23,7 @@ public class AccountsController {
     @Operation(summary = "모든 계정 정보 조회 API", description = "전계정 정보 조회")
     @ApiResponse(responseCode = "200", description = "Success")
     @GetMapping
-    public RestApiResponse<List<AccountGetResponseDtoImpl>> list() {
+    public RestApiResponse<List<AccountGetResponseDto>> list() {
         return accountService.list();
     }
 }

@@ -22,7 +22,9 @@ public interface AccountService {
 
     RestApiResponse<AccountCheckTokenResponseDto> decryptToken(String token);
 
-	RestApiResponse<AccountGetResponseDtoImpl> get(Long id);
+	RestApiResponse<AccountGetResponseDto> get(Long id);
 
-	RestApiResponse<List<AccountGetResponseDtoImpl>> list();
+	RestApiResponse<List<AccountGetResponseDto>> list();
+
+	RestApiResponse<AccountGetResponseDto> get(String email);
 }

@@ -1,20 +1,20 @@
 package io.snplab.gsdk.access.config;
 
-import io.snplab.gsdk.access.handler.AccountAccessDeniedHandler;
-import io.snplab.gsdk.access.handler.AccountAuthenticationProvider;
-import io.snplab.gsdk.access.handler.AccountAuthenticationFailureHandler;
-import io.snplab.gsdk.access.handler.AccountAuthenticationSuccessHandler;
-import io.snplab.gsdk.access.service.AccountUserDetailsService;
 import io.snplab.gsdk.account.domain.AccountRoles;
-import io.snplab.gsdk.account.repository.AccountRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
 import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 
@@ -24,13 +24,14 @@ import javax.sql.DataSource;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
-    private final AccountAuthenticationProvider accountAuthenticationProvider;
-    private final AccountAuthenticationSuccessHandler accountAuthenticationSuccessHandler;
-    private final AccountAuthenticationFailureHandler accountAuthenticationFailureHandler;
-    private final AccountUserDetailsService accountUserDetailsService;
-    private final AccountAccessDeniedHandler accountAccessDeniedHandler;
+    private final AuthenticationProvider authenticationProvider;
+    private final AuthenticationSuccessHandler authenticationSuccessHandler;
+    private final AuthenticationFailureHandler authenticationFailureHandler;
+    private final UserDetailsService userDetailsService;
+    private final AccessDeniedHandler accessDeniedHandler;
     private final DataSource dataSource;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationEntryPoint authenticationEntryPoint;
 
     @Override
     public void configure(WebSecurity web) throws Exception {
@@ -40,8 +41,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth
-                .authenticationProvider(accountAuthenticationProvider)
-                .userDetailsService(accountUserDetailsService)
+                .authenticationProvider(authenticationProvider)
+                .userDetailsService(userDetailsService)
                 .passwordEncoder(passwordEncoder);
     }
 
@@ -59,24 +60,23 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .usernameParameter("enc-username")
                     .passwordParameter("enc-password")
                     .loginProcessingUrl("/login")
-                    .successHandler(accountAuthenticationSuccessHandler)
-                    .failureHandler(accountAuthenticationFailureHandler)
+                    .successHandler(authenticationSuccessHandler)
+                    .failureHandler(authenticationFailureHandler)
                     .and()
                 .logout()
                     .logoutUrl("/logout")
                     .logoutSuccessUrl("/login")
                     .and()
                 .exceptionHandling()
-                    .accessDeniedHandler(accountAccessDeniedHandler)
+                    .accessDeniedHandler(accessDeniedHandler)
+                    .authenticationEntryPoint(authenticationEntryPoint)
                     .and()
                 .sessionManagement()
-                    .invalidSessionUrl("/Login?invalidSession")
                     .maximumSessions(1)
-                    .expiredUrl("/Login?expired")
-                        .and()
                     .and()
+                .and()
                 .rememberMe()
-                    .userDetailsService(accountUserDetailsService)
+                    .userDetailsService(userDetailsService)
                     .tokenRepository(this.getTokenRepository())
                     .rememberMeParameter("auto-login")
                     .tokenValiditySeconds(60 * 60 * 24 * 7)

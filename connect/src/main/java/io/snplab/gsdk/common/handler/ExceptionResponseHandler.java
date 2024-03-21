@@ -17,6 +17,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -26,6 +27,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
@@ -76,7 +78,7 @@ public class ExceptionResponseHandler extends ResponseEntityExceptionHandler {
     }
 
     @Description("Request bad request exception abort")
-    @ExceptionHandler({HttpClientErrorException.BadRequest.class, HttpClientErrorException.NotFound.class, NotFoundException.class})
+    @ExceptionHandler({HttpClientErrorException.BadRequest.class, HttpClientErrorException.NotFound.class, NotFoundException.class, IllegalArgumentException.class})
     public RestApiResponse<Object> handleBadRequestException(Exception e) {
         logger.error("handle BadRequestException: {}", e.getMessage());
         return RestApiResponse.error(HttpStatus.BAD_REQUEST, e.getMessage());
@@ -115,5 +117,10 @@ public class ExceptionResponseHandler extends ResponseEntityExceptionHandler {
     public RestApiResponse<Object> handleFileOrDirectoryNotExistException(FileOrDirectoryNotExistException e) {
         logger.error("handle File or Directory NotExistException: {}", e.getMessage());
         return RestApiResponse.error(e.getCode(), e.getMessage());
+    }
+
+    @ExceptionHandler({AuthenticationCredentialsNotFoundException.class})
+    public void processAuthenticationException(HttpServletResponse response) throws IOException {
+        response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
     }
 }

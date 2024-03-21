@@ -19,14 +19,14 @@ import java.io.IOException;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("v1/keyword")
+@RequestMapping("/v1/keyword")
 @Tag(name = "Global SDK 키워드 관리 API")
 public class KeywordController {
     private final KeywordService keywordService;
 
     @Operation(summary = "File confirm API", description = "업로드 파일을 확정")
     @ApiResponse(responseCode = "200", description = "업로드한 파일에서 데이터 추출 후 DB에 저장 완료")
-    @PostMapping("confirm")
+    @PostMapping("/confirm")
     public RestApiResponse<Object> confirmFile(@RequestBody @Valid FileConfirmDto fileConfirmDto) throws IOException {
 
         return keywordService.confirmFileUpload(fileConfirmDto);
@@ -34,7 +34,7 @@ public class KeywordController {
 
     @Operation(summary = "Keyword 조회 API", description = "updatedAt 기준으로 서버에 활성화된 키워드, 비활성화된 키워드 조회")
     @ApiResponse(responseCode = "200", description = "Success")
-    @PostMapping("status")
+    @PostMapping("/status")
     public RestApiResponse<KeywordGetResponseDto> status(@RequestBody @Valid KeywordGetRequestDto keywordUpdateRequestDto) {
         return keywordService.status(keywordUpdateRequestDto);
     }
