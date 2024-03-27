@@ -8,9 +8,9 @@ import java.util.List;
 
 @Repository
 public interface KeywordRepository extends JpaRepository<Keyword, Long> {
-	List<Keyword> findByIsActivatedAndServiceId(boolean isActivated, Long serviceId);
+	List<Keyword> findByIsActivatedAndServiceId(boolean isActivated, String serviceId);
 
-	List<Keyword> findByServiceIdAndIsActivated(Long serviceId, boolean isActivated);
+	List<Keyword> findByServiceIdAndIsActivated(String serviceId, boolean isActivated);
 
-	List<Keyword> findByServiceIdAndUpdatedAtGreaterThan(Long serviceId, LocalDateTime updatedAt);
+	List<Keyword> findByServiceIdAndUpdatedAtGreaterThan(String serviceId, LocalDateTime updatedAt);
 }

@@ -149,6 +149,7 @@ public class AccountServiceImpl implements AccountService {
                 .phoneNumber(aes256.decrypt(accountProjection.getPhoneNumber()))
                 .companyName(accountProjection.getCompanyName())
                 .serviceName(accountProjection.getServiceName())
+                .serviceId(accountProjection.getServiceId())
                 .build();
     }
 

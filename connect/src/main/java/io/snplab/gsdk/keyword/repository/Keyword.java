@@ -27,7 +27,8 @@ public class Keyword {
 
     private Long historyId;
 
-    private Long serviceId;
+    @Column(length = 36)
+    private String serviceId;
 
     @Column(length = 70)
     private String keyword;
@@ -41,7 +42,7 @@ public class Keyword {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    public Keyword(String keyword, Long historyId, Long serviceId, boolean isActivated) {
+    public Keyword(String keyword, Long historyId, String serviceId, boolean isActivated) {
         this.keyword = keyword;
         this.historyId = historyId;
         this.serviceId = serviceId;

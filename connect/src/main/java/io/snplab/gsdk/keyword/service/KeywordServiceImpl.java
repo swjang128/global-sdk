@@ -1,6 +1,5 @@
 package io.snplab.gsdk.keyword.service;
 
-import com.amazonaws.services.kms.model.NotFoundException;
 import com.opencsv.CSVReader;
 import io.snplab.gsdk.account.repository.Account;
 import io.snplab.gsdk.account.repository.AccountRepository;
@@ -11,7 +10,6 @@ import io.snplab.gsdk.common.handler.exception.FileOrDirectoryNotExistException;
 import io.snplab.gsdk.common.util.Environment;
 import io.snplab.gsdk.common.util.RootPath;
 import io.snplab.gsdk.keyword.dto.FileConfirmDto;
-import io.snplab.gsdk.keyword.dto.KeywordGetRequestDto;
 import io.snplab.gsdk.keyword.dto.KeywordGetResponseDto;
 import io.snplab.gsdk.keyword.repository.Keyword;
 import io.snplab.gsdk.keyword.repository.KeywordHistory;
@@ -32,14 +30,16 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.*;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class KeywordServiceImpl implements KeywordService {
-    private static String GSDK = Paths.get(Environment.getRootPath(RootPath.WEB)).toAbsolutePath().toString() + File.separator + "gsdk";
-
     private final AccountRepository accountRepository;
     private final AccountRoleRepository accountRoleRepository;
     private final KeywordRepository keywordRepository;
@@ -47,6 +47,7 @@ public class KeywordServiceImpl implements KeywordService {
 
 
     public RestApiResponse<Object> confirmFileUpload(FileConfirmDto fileConfirmDto) throws IOException {
+        String GSDK = Paths.get(Environment.getRootPath(RootPath.WEB)).toAbsolutePath().toString() + File.separator + "gsdk";
         String user = SecurityContextHolder.getContext().getAuthentication().getName();
         Account account = accountRepository.findByEmail(user).orElseThrow(() -> new UsernameNotFoundException("사용자 정보를 찾지 못하였습니다."));
         AccountRole accountRole = accountRoleRepository.findByAccountId(account.getId()).orElseThrow(() -> new UsernameNotFoundException("사용자 권한을 찾지 못하였습니다."));
@@ -115,7 +116,7 @@ public class KeywordServiceImpl implements KeywordService {
     }
 
     @Transactional
-    private void saveKeyword(TreeSet<String> keywordSet, Long historyId, Long serviceId) {
+    private void saveKeyword(TreeSet<String> keywordSet, Long historyId, String serviceId) {
         // 기존 해당 서비스 ID로 등록했던 키워드 조회
         Map<String, Keyword> existingKeywords = keywordRepository.findByIsActivatedAndServiceId(true, serviceId)
                 .stream()
@@ -133,24 +134,27 @@ public class KeywordServiceImpl implements KeywordService {
         keywordRepository.saveAll(existingKeywords.values());
     }
 
+    /**
+     * updatedAt 값이 not null일 경우 updatedAt 기준 업데이트된 키워드 조회, null 일경우 활성화된 키워드만 조회
+     *
+     * @param serviceId
+     * @param updatedAt
+     * @return
+     */
     @Override
-    public RestApiResponse<KeywordGetResponseDto> status(KeywordGetRequestDto keywordGetRequestDto) {
+    public RestApiResponse<KeywordGetResponseDto> getKeyword(String serviceId, LocalDateTime updatedAt) {
         KeywordGetResponseDto.KeywordGetResponseDtoBuilder keywordGetResponseDtoBuilder = null;
 
-        switch (keywordGetRequestDto.getStatus()) {
-            //  updatedAt 이후의 업데이트 상태 조회후 active, inactive 분류
-            case ALL -> {
-                List<Keyword> updatedKeywords = keywordRepository.findByServiceIdAndUpdatedAtGreaterThan(keywordGetRequestDto.getServiceId(), keywordGetRequestDto.getUpdatedAt());
-                keywordGetResponseDtoBuilder = KeywordGetResponseDto.builder()
-                        .activeKeywords(updatedKeywords.stream().filter(Keyword::isActivated).map(Keyword::getKeyword).collect(Collectors.toList()))
-                        .inactiveKeywords(updatedKeywords.stream().filter(keyword -> !keyword.isActivated()).map(Keyword::getKeyword).collect(Collectors.toList()));
-            }
-            //  해당 서비스의 activated 가 true인 keyword 전부 조회
-            case ACTIVATED -> keywordGetResponseDtoBuilder = KeywordGetResponseDto.builder()
-                    .activeKeywords(keywordRepository.findByServiceIdAndIsActivated(keywordGetRequestDto.getServiceId(), true).stream()
+        if (updatedAt != null) {
+            List<Keyword> updatedKeywords = keywordRepository.findByServiceIdAndUpdatedAtGreaterThan(serviceId, updatedAt);
+            keywordGetResponseDtoBuilder = KeywordGetResponseDto.builder()
+                    .activeKeywords(updatedKeywords.stream().filter(Keyword::isActivated).map(Keyword::getKeyword).collect(Collectors.toList()))
+                    .inactiveKeywords(updatedKeywords.stream().filter(keyword -> !keyword.isActivated()).map(Keyword::getKeyword).collect(Collectors.toList()));
+        } else {
+            keywordGetResponseDtoBuilder = KeywordGetResponseDto.builder()
+                    .activeKeywords(keywordRepository.findByServiceIdAndIsActivated(serviceId, true).stream()
                             .map(Keyword::getKeyword)
                             .collect(Collectors.toList()));
-            default -> throw new NotFoundException("올바르지않은 상태값.");
         }
 
         return RestApiResponse.success(keywordGetResponseDtoBuilder.build());

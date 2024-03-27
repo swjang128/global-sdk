@@ -48,7 +48,6 @@ import java.util.regex.Pattern;
 @Service
 public class FileUploadServiceImpl implements FileUploadService {
 
-    private static String GSDK = Paths.get(Environment.getRootPath(RootPath.WEB)).toAbsolutePath().toString() + File.separator + "gsdk";
     private static Pattern REGEX = Pattern.compile("(?i)\\bproduct[\\s_-]*name\\b");
     private static final long MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
 
@@ -62,7 +61,7 @@ public class FileUploadServiceImpl implements FileUploadService {
         Account account = accountRepository.findByEmail(user).orElseThrow(() -> new UsernameNotFoundException("사용자 정보를 찾지 못하였습니다."));
 
         AccountRole accountRole = accountRoleRepository.findByAccountId(account.getId()).orElseThrow(() -> new UsernameNotFoundException("사용자 권한을 찾지 못하였습니다."));
-        Long serviceId = accountRole.getServiceId();
+        String serviceId = accountRole.getServiceId();
 
         KeywordHistory keywordHistory = keywordHistoryRepository.findTopByServiceIdOrderByCreatedAtDesc(serviceId).orElseThrow(() -> new FileSaveException("파일 업로드 기록이 존재하지 않습니다."));
         FileDetailInfoResponseDto responseDto = FileDetailInfoResponseDto.builder()
@@ -76,6 +75,7 @@ public class FileUploadServiceImpl implements FileUploadService {
     @Transactional
     public RestApiResponse<Object> vaildateAndUploadExcel(MultipartHttpServletRequest request) throws IOException, InvalidFormatException {
 
+        String GSDK = Paths.get(Environment.getRootPath(RootPath.WEB)).toAbsolutePath().toString() + File.separator + "gsdk";
         String user = SecurityContextHolder.getContext().getAuthentication().getName();
         Account account = accountRepository.findByEmail(user).orElseThrow(() -> new UsernameNotFoundException("사용자 정보를 찾지 못하였습니다."));
 
@@ -126,7 +126,7 @@ public class FileUploadServiceImpl implements FileUploadService {
         Account account = accountRepository.findByEmail(user).orElseThrow(() -> new UsernameNotFoundException("사용자 정보를 찾지 못하였습니다."));
 
         AccountRole accountRole = accountRoleRepository.findByAccountId(account.getId()).orElseThrow(() -> new UsernameNotFoundException("사용자 권한을 찾지 못하였습니다."));
-        Long serviceId = accountRole.getServiceId();
+        String serviceId = accountRole.getServiceId();
 
         KeywordHistory keywordHistory = keywordHistoryRepository.findTopByServiceIdOrderByCreatedAtDesc(serviceId).orElseThrow(() -> new FileSaveException("파일 업로드 기록이 존재하지 않습니다."));
 

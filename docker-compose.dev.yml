@@ -1,0 +1,32 @@
+version: "3"
+
+x-logging:
+  &default-logging
+  options:
+    tag: "{{.ImageName}}//{{.Name}}"
+
+services:
+  api-server:
+    container_name: gsdk-connect
+    image: openjdk:17-slim
+    command: bash -c "java -Djava.security.egd=file:/dev/./urandom -jar /usr/local/gsdk/connect.war"
+    volumes:
+      - ./connect/build/libs/gsdk-connect-1.0-SNAPSHOT.jar:/usr/local/gsdk/connect.war
+      - /opt/myd/web/ROOT:/opt/myd/web/ROOT
+    env_file:
+      - ./.env.dev
+    environment:
+      - SERVER_NAME=gsdk-connect
+    ports:
+      - "8880:8080"
+    networks:
+      - gsdk
+    restart: "unless-stopped"
+    logging: *default-logging
+
+networks:
+  gsdk:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/24

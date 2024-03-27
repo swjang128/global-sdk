@@ -28,15 +28,15 @@ public class AccountRole {
     @Column(nullable = false, columnDefinition = "INT UNSIGNED")
     private Long accountId;
 
-    @Column(nullable = false, columnDefinition = "INT UNSIGNED")
-    private Long serviceId;
+    @Column(length = 36, nullable = false)
+    private String serviceId;
 
     @Column(nullable = false, length = 10)
     @Enumerated(EnumType.STRING)
     private AccountRoles roleName;
 
     @Column(columnDefinition = "boolean default true")
-    private boolean isActivated = true;
+    private boolean isActivated;
 
     @CreatedDate
     private LocalDateTime createdAt;
@@ -44,7 +44,7 @@ public class AccountRole {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    public static AccountRole of(Long accountId, Long serviceId) {
+    public static AccountRole of(Long accountId, String serviceId) {
         return AccountRole.builder()
                 .accountId(accountId)
                 .serviceId(serviceId)

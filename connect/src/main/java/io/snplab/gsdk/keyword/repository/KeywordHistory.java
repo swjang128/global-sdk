@@ -24,7 +24,8 @@ public class KeywordHistory {
     @Column(nullable = false, columnDefinition = "INT UNSIGNED")
     private Long id;
 
-    private Long serviceId;
+    @Column(length = 36)
+    private String serviceId;
 
     private Long accountId;
 

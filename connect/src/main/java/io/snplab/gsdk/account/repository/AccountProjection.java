@@ -12,4 +12,6 @@ public interface AccountProjection {
     String getCompanyName();
 
     String getServiceName();
+
+    String getServiceId();
 }

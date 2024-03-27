@@ -23,4 +23,6 @@ public class AccountGetResponseDto {
     private String companyName;
     @Schema(description = "담당 서비스 이름", example = "토스")
     private String serviceName;
+    @Schema(description = "담당 서비스 UUID", example = "f8c90a1f-e2ad-4e3b-977a-a330057406eb")
+    private String serviceId;
 }

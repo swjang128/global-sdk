@@ -8,5 +8,5 @@ import java.util.Optional;
 @Repository
 public interface KeywordHistoryRepository extends JpaRepository<KeywordHistory, Long> {
 
-    Optional<KeywordHistory> findTopByServiceIdOrderByCreatedAtDesc(Long serviceId);
+    Optional<KeywordHistory> findTopByServiceIdOrderByCreatedAtDesc(String serviceId);
 }
