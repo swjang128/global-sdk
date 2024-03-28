@@ -9,7 +9,7 @@ repositories {
 }
 
 subprojects {
-    group 'io.snplab.gsdk'
+    group 'io.study.k-marketing'
     version '1.0-SNAPSHOT'
 
     apply plugin: 'java'
@@ -18,7 +18,7 @@ subprojects {
     apply plugin: 'io.spring.dependency-management'
 
     java {
-        sourceCompatibility = '17'
+        sourceCompatibility = '21'
     }
 
     repositories {

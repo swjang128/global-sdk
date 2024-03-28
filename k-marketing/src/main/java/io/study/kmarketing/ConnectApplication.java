@@ -1,4 +1,4 @@
-package io.snplab.gsdk;
+package io.study.kmarketing;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

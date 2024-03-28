@@ -15,4 +15,4 @@ dependencies {
 jar {
 	enabled = false
 }
-description = 'gsdk-connect'
+description = 'keyword-marketing'
